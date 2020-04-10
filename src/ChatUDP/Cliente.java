@@ -19,9 +19,6 @@ public class Cliente extends JFrame {
 	private JLabel lblQuestion;
 	private JScrollPane scrollPane;
 
-	private ThreadEnviar hiloEnviar;
-	private ThreadRecibir hiloRecibir;
-
 	public Cliente() {
 
 		setType(Type.POPUP);
