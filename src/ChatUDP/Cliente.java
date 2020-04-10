@@ -1,24 +1,28 @@
-package Chat.Cliente;
+package ChatUDP;
 
 import java.awt.Color;
-import java.io.IOException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.net.InetAddress;
-import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+
 import javax.swing.*;
 
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+public class Cliente extends JFrame {
 
-public class ChatCliente extends JFrame {
 	public JTextField campoEscribir;
 	public JTextArea campoChat;
 	private JButton btnExit;
 	private JLabel lblQuestion;
 	private JScrollPane scrollPane;
 
-	public ChatCliente() {
+	private ThreadEnviar hiloEnviar;
+	private ThreadRecibir hiloRecibir;
+
+	public Cliente() {
 
 		setType(Type.POPUP);
 		setTitle("Client");
@@ -27,10 +31,18 @@ public class ChatCliente extends JFrame {
 		getContentPane().setLayout(null);
 		campoEscribir = new JTextField();
 		campoEscribir.setBounds(0, 26, 400, 26);
-		campoEscribir.setEditable(false);
+		campoEscribir.setEditable(true);
 		getContentPane().add(campoEscribir);
 
-		lblQuestion = new JLabel("¿Qué necesita?");
+		campoEscribir.addKeyListener(new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					campoEscribir.setText("");
+				}
+			}
+
+		});
+
 		lblQuestion.setBounds(6, 6, 91, 16);
 		getContentPane().add(lblQuestion);
 
@@ -56,30 +68,28 @@ public class ChatCliente extends JFrame {
 
 	public void mostrarMensaje(String mensaje) {
 		campoChat.append(mensaje + "\n");
+	}
+
+	public String enviar(String datos) {
+		return datos;
+	}
+
+	public static void main(String args[]) throws UnknownHostException, SocketException {
+
+		int puerto = 42069;
+		String host = "localhost";
+
+		System.out.println("Usando UDP...");
+		System.out.println("Host: " + host + "   Puerto: " + puerto);
+		System.out.println("\n");
+
+		InetAddress ia = InetAddress.getByName(host);
+
+		ThreadEnviar enviar = new ThreadEnviar(ia, puerto);
+		enviar.start();
+		ThreadRecibir recibir = new ThreadRecibir(enviar.getSocket());
+		recibir.start();
 
 	}
 
-	public void habilitarTexto(boolean editable) {
-		campoEscribir.setEditable(editable);
-	}
-
-	public static void main(String[] args) {
-		ChatCliente chat = new ChatCliente();
-		ExecutorService executor = Executors.newCachedThreadPool();
-
-		chat.mostrarMensaje("Buscando Servidor...");
-
-		try {
-			Socket cliente = new Socket(InetAddress.getByName("localhost"), 42069);
-			chat.mostrarMensaje("Conectado correctamente a: " + cliente.getInetAddress().getHostName());
-
-			chat.habilitarTexto(true);
-			executor.execute(new ThreadRecibe(cliente, chat));
-			executor.execute(new ThreadEnvia(cliente, chat));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		executor.shutdown();
-	}
 }
